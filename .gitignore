@@ -1,2 +1,4 @@
 myenv/
+Images For Inference/
 *.pt
+*.jpg

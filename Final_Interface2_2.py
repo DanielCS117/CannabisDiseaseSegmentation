@@ -1,7 +1,8 @@
+import os
 import sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageQt
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog, QSlider
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog, QSlider, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 import torch
@@ -40,19 +41,19 @@ class GuideUserInterface(QWidget):
         self.label.resize(640, 480)
 
         self.label_info = QLabel(self)
-        self.label_info.move(50, 350)
+        self.label_info.move(800, 290)
         self.label_info.resize(640, 480)
 
         self.btn = QPushButton('Cargar imagen', self)
-        self.btn.move(600, 300)
+        self.btn.move(800, 300)
         self.btn.clicked.connect(self.loadImage)
 
-        self.toggle_button = QPushButton('Toggle Mask', self)
-        self.toggle_button.move(800, 300)
+        self.toggle_button = QPushButton(r'Mostrar/Ocultar', self)
+        self.toggle_button.move(1000, 300)
         self.toggle_button.clicked.connect(self.toggle_mask)
 
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.slider.setGeometry(800, 350, 160, 30)
+        self.slider.setGeometry(1000, 350, 160, 30)
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setValue(30)
@@ -69,13 +70,15 @@ class GuideUserInterface(QWidget):
             classes=num_classes
         )
         try:
-            print("Loading model...")
+            print("Cargando Modelo...")
             state_dict = torch.load(self.model_path, map_location=torch.device('cpu'))
             self.model_inference.load_state_dict(state_dict)
             self.model_inference.eval()
-            print("Model loaded successfully.")
+            print("Modelo Cargado")
         except Exception as e:
-            print(f"Error loading model: {e}")
+            error_m = f"Error cargando el modelo: {e}"
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
 
     def updateInfoLabel(self, class_pixels, class_percentages):
         info_text = "Píxeles de Clase:\n"
@@ -87,10 +90,10 @@ class GuideUserInterface(QWidget):
         self.label_info.setText(info_text)
 
     def loadImage(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Abrir Imagen", "", "Image Files (*.png *.jpg *.jpeg *.bmp)")
+        fileName, _ = QFileDialog.getOpenFileName(self, 'Abrir Imagen', '', 'Image Files (*.png *.jpg *.jpeg *.bmp)')
         if fileName:
             try:
-                print(f"Loading image: {fileName}")
+                print(f'Cargando Imagen: {fileName}')
                 image = Image.open(fileName).convert('RGB')
                 self.image = image
 
@@ -101,7 +104,7 @@ class GuideUserInterface(QWidget):
                 ])
 
                 input_image = preprocess(image).unsqueeze(0)
-                print("Performing inference...")
+                print('Realizando Predicción')
                 with torch.no_grad():
                     output = self.model_inference(input_image)
                 predicted_masks = torch.argmax(output, dim=1)
@@ -114,13 +117,13 @@ class GuideUserInterface(QWidget):
                 self.updateInfoLabel(class_pixels, class_percentages)
 
                 self.display_image_with_mask(self.image, self.predicted_mask)
-                print("Image loaded and processed successfully.")
+                print('Imagen cargada y procesada exitosamente.')
             except Exception as e:
-                print(f"Error loading image: {e}")
+                print(f'Error cargando imagen: {e}')
 
     def display_image_with_mask(self, image, mask):
         try:
-            print("Displaying image with mask...")
+            print('Mostrando imagen con máscara...')
             overlay_img = self.overlay_mask_on_image(image, mask)
             overlay_img = overlay_img.convert("RGB")
             overlay_img = overlay_img.resize((640, 480), Image.Resampling.LANCZOS)
@@ -128,11 +131,13 @@ class GuideUserInterface(QWidget):
             pixmap = QPixmap.fromImage(overlay_img_qt)
             self.label.setPixmap(pixmap)
         except Exception as e:
-            print(f"Error displaying image with mask: {e}")
+            error_m = f'Error mostrando imagen con Máscara: {e}'
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
 
     def overlay_mask_on_image(self, image, mask):
         try:
-            print("Overlaying mask on image...")
+            print('Superponiendo máscara...')
             image_resized = image.resize((1024, 1024))
             class_colors = {
                 0: (0, 0, 0, 0),  # Fondo
@@ -142,7 +147,7 @@ class GuideUserInterface(QWidget):
                 4: (255, 165, 0, int(self.mask_alpha * 255)),  # Botritis Etapa 3
                 5: (255, 255, 0, int(self.mask_alpha * 255)),  # Deficiencias Nutricionales
             }
-            mask_img = Image.new("RGBA", (1024, 1024))
+            mask_img = Image.new('RGBA', (1024, 1024))
             mask_pixels = mask_img.load()
             for y in range(1024):
                 for x in range(1024):
@@ -150,41 +155,49 @@ class GuideUserInterface(QWidget):
             overlay_img = Image.alpha_composite(image_resized.convert("RGBA"), mask_img)
             return overlay_img
         except Exception as e:
-            print(f"Error overlaying mask on image: {e}")
+            error_m = f'Error superponiendo máscara: {e}'
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
             return image
 
     def toggle_mask(self):
         try:
-            print("Toggling mask visibility...")
+            print('Cambiando transparencia de la máscara...')
             self.mask_visible = not self.mask_visible
             if self.mask_visible:
                 self.display_image_with_mask(self.image, self.predicted_mask)
             else:
                 self.display_image(self.image)
         except Exception as e:
-            print(f"Error toggling mask: {e}")
+            error_m = f'Error cambiando transparencia de la máscara: {e}'
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
 
     def update_transparency(self, value):
         try:
-            print(f"Updating transparency: {value}")
+            print(f'Actualizando transparencia: {value}')
             self.mask_alpha = value / 100
             if self.mask_visible:
                 self.display_image_with_mask(self.image, self.predicted_mask)
         except Exception as e:
-            print(f"Error updating transparency: {e}")
+            error_m = f'Error actualizando transparencia: {e}'
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
 
     def display_image(self, image):
         try:
-            print("Displaying image without mask...")
+            print('Mostrando imagen sin máscara...')
             image = image.convert("RGB")
             image = image.resize((640, 480), Image.Resampling.LANCZOS)
             image_qt = ImageQt.ImageQt(image)
             pixmap = QPixmap.fromImage(image_qt)
             self.label.setPixmap(pixmap)
         except Exception as e:
-            print(f"Error displaying image: {e}")
+            error_m = f'Error mostrando imagen: {e}'
+            print(error_m)
+            QMessageBox.critical(self, 'Error', error_m)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = GuideUserInterface("model_Unet__41_checkpoint_epoch_40.pt")  # Update the path to your model
+    ex = GuideUserInterface('model_Unet__41_checkpoint_epoch_40.pt')
     sys.exit(app.exec())
