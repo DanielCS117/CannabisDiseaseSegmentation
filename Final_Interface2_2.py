@@ -36,9 +36,9 @@ class GuideUserInterface(QWidget):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        layout = QVBoxLayout()
-        legend_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()
 
+        legend_layout = QHBoxLayout()
         self.legends = {
             'Fondo': (0, 0, 0),
             'Plantas Sanas': (0, 255, 0),
@@ -61,13 +61,16 @@ class GuideUserInterface(QWidget):
             legend_container.addWidget(legend_label)
             legend_layout.addLayout(legend_container)
 
-        layout.addLayout(legend_layout)
+        main_layout.addLayout(legend_layout)
 
+        self.image_layout = QHBoxLayout()
+        self.image_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.label = QLabel(self)
-        layout.addWidget(self.label)
+        self.image_layout.addWidget(self.label)
+        main_layout.addLayout(self.image_layout)
 
         self.label_info = QLabel(self)
-        layout.addWidget(self.label_info)
+        main_layout.addWidget(self.label_info)
 
         button_layout = QHBoxLayout()
         self.btn = QPushButton('Cargar imagen', self)
@@ -85,8 +88,8 @@ class GuideUserInterface(QWidget):
         self.slider.valueChanged.connect(self.update_transparency)
         button_layout.addWidget(self.slider)
 
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
         self.show()
 
     def loadModel(self):
@@ -205,8 +208,7 @@ class GuideUserInterface(QWidget):
 
     def update_transparency(self, value):
         try:
-            print(f'Actualizando transparencia: {value}')
-            self.mask_alpha = value / 100.0
+            self.mask_alpha = value / 100
             self.overlay_img = self.create_overlay_image(self.image, self.predicted_mask)
             self.display_image_with_mask()
         except Exception as e:
@@ -225,7 +227,6 @@ class GuideUserInterface(QWidget):
             error_m = f'Error mostrando imagen: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
