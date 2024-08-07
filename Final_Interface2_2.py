@@ -2,8 +2,8 @@ import os
 import sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageQt
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog, QSlider, QMessageBox
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog, QSlider, QMessageBox, QHBoxLayout, QVBoxLayout, QFrame
+from PyQt6.QtGui import QPixmap, QPainter, QColor
 from PyQt6.QtCore import Qt
 import torch
 import torchvision.transforms as transforms
@@ -36,29 +36,57 @@ class GuideUserInterface(QWidget):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        layout = QVBoxLayout()
+        legend_layout = QHBoxLayout()
+
+        self.legends = {
+            'Fondo': (0, 0, 0),
+            'Plantas Sanas': (0, 255, 0),
+            'Botritis Etapa 1': (165, 42, 42),
+            'Botritis Etapa 2': (128, 0, 128),
+            'Botritis Etapa 3': (255, 165, 0),
+            'Deficiencias Nutricionales': (255, 255, 0)
+        }
+
+        for name, color in self.legends.items():
+            legend_item = QFrame()
+            legend_item.setFixedSize(20, 20)
+            legend_item.setStyleSheet(f'background-color: rgb({color[0]}, {color[1]}, {color[2]}); border-radius: 10px;')
+
+            legend_label = QLabel(name)
+            legend_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            legend_container = QVBoxLayout()
+            legend_container.addWidget(legend_item)
+            legend_container.addWidget(legend_label)
+            legend_layout.addLayout(legend_container)
+
+        layout.addLayout(legend_layout)
+
         self.label = QLabel(self)
-        self.label.move(20, 20)
-        self.label.resize(640, 480)
+        layout.addWidget(self.label)
 
         self.label_info = QLabel(self)
-        self.label_info.move(800, 290)
-        self.label_info.resize(640, 480)
+        layout.addWidget(self.label_info)
 
+        button_layout = QHBoxLayout()
         self.btn = QPushButton('Cargar imagen', self)
-        self.btn.move(800, 300)
         self.btn.clicked.connect(self.loadImage)
+        button_layout.addWidget(self.btn)
 
         self.toggle_button = QPushButton(r'Mostrar/Ocultar', self)
-        self.toggle_button.move(1000, 300)
         self.toggle_button.clicked.connect(self.toggle_mask)
+        button_layout.addWidget(self.toggle_button)
 
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.slider.setGeometry(1000, 350, 160, 30)
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setValue(30)
         self.slider.valueChanged.connect(self.update_transparency)
+        button_layout.addWidget(self.slider)
 
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
         self.show()
 
     def loadModel(self):
@@ -115,16 +143,18 @@ class GuideUserInterface(QWidget):
                 class_names = ['Fondo', 'Plantas Sanas', 'Botritis Etapa 1', 'Botritis Etapa 2', 'Botritis Etapa 3', 'Deficiencias Nutricionales']
                 class_percentages = {class_names[key]: value / total_pixels * 100 for key, value in class_pixels.items()}
                 self.updateInfoLabel(class_pixels, class_percentages)
-
-                self.display_image_with_mask(self.image, self.predicted_mask)
+                self.overlay_img = self.create_overlay_image(self.image, self.predicted_mask)
+                self.display_image_with_mask()
                 print('Imagen cargada y procesada exitosamente.')
             except Exception as e:
                 print(f'Error cargando imagen: {e}')
 
-    def display_image_with_mask(self, image, mask):
+    def display_image_with_mask(self):
         try:
             print('Mostrando imagen con máscara...')
-            overlay_img = self.overlay_mask_on_image(image, mask)
+            if self.overlay_img is None:
+                return
+            overlay_img = self.overlay_img.copy()
             overlay_img = overlay_img.convert("RGB")
             overlay_img = overlay_img.resize((640, 480), Image.Resampling.LANCZOS)
             overlay_img_qt = ImageQt.ImageQt(overlay_img)
@@ -135,7 +165,7 @@ class GuideUserInterface(QWidget):
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 
-    def overlay_mask_on_image(self, image, mask):
+    def create_overlay_image(self, image, mask):
         try:
             print('Superponiendo máscara...')
             image_resized = image.resize((1024, 1024))
@@ -165,7 +195,7 @@ class GuideUserInterface(QWidget):
             print('Cambiando transparencia de la máscara...')
             self.mask_visible = not self.mask_visible
             if self.mask_visible:
-                self.display_image_with_mask(self.image, self.predicted_mask)
+                self.display_image_with_mask()
             else:
                 self.display_image(self.image)
         except Exception as e:
@@ -176,9 +206,9 @@ class GuideUserInterface(QWidget):
     def update_transparency(self, value):
         try:
             print(f'Actualizando transparencia: {value}')
-            self.mask_alpha = value / 100
-            if self.mask_visible:
-                self.display_image_with_mask(self.image, self.predicted_mask)
+            self.mask_alpha = value / 100.0
+            self.overlay_img = self.create_overlay_image(self.image, self.predicted_mask)
+            self.display_image_with_mask()
         except Exception as e:
             error_m = f'Error actualizando transparencia: {e}'
             print(error_m)
@@ -186,16 +216,16 @@ class GuideUserInterface(QWidget):
 
     def display_image(self, image):
         try:
-            print('Mostrando imagen sin máscara...')
-            image = image.convert("RGB")
-            image = image.resize((640, 480), Image.Resampling.LANCZOS)
-            image_qt = ImageQt.ImageQt(image)
+            print('Mostrando imagen...')
+            image_resized = image.resize((640, 480), Image.Resampling.LANCZOS)
+            image_qt = ImageQt.ImageQt(image_resized)
             pixmap = QPixmap.fromImage(image_qt)
             self.label.setPixmap(pixmap)
         except Exception as e:
             error_m = f'Error mostrando imagen: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
