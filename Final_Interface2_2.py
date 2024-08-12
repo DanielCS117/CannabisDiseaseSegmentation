@@ -8,12 +8,11 @@ from PyQt6.QtCore import Qt
 import torch
 import torchvision.transforms as transforms
 import segmentation_models_pytorch as smp
-import psutil
 
 class GuideUserInterface(QWidget):
     def __init__(self, model_path):
         super().__init__()
-        self.title = 'Inferencia con U-Net'
+        self.title = 'Predicción con U-Net'
         self.left = 0
         self.top = 0
         self.width = 1280
@@ -24,7 +23,7 @@ class GuideUserInterface(QWidget):
         self.mask_alpha = 0.3
         self.mask_visible = True
         self.predicted_mask = None
-        self.zoom_level = 1.0  # Default zoom level
+        self.zoom_level = 1.0  
 
     def calculate_class_pixels(self, predicted_masks_np):
         class_pixels = {i: 0 for i in range(6)}
@@ -92,7 +91,7 @@ class GuideUserInterface(QWidget):
 
         sliders_layout = QVBoxLayout()
 
-        self.mask_transparency_label = QLabel('Mask Transparency', self)
+        self.mask_transparency_label = QLabel('Transparencia', self)
         sliders_layout.addWidget(self.mask_transparency_label)
 
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -194,7 +193,7 @@ class GuideUserInterface(QWidget):
 
     def display_image_with_mask(self):
         try:
-            print(f'Uso de memoria: {psutil.virtual_memory().percent}%')
+        
             print('Mostrando imagen con máscara...')
             if self.overlay_img is None:
                 return
