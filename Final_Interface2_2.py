@@ -75,6 +75,15 @@ class GuideUserInterface(QWidget):
         center_layout.addStretch(1)
         center_layout.addWidget(self.scroll_area)
         center_layout.addStretch(1)
+
+         
+        # Recomendaciones
+        self.recommendation_label = QLabel(self)
+        self.recommendation_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.recommendation_label.setWordWrap(True)
+        self.recommendation_label.setFixedWidth(250)  #
+        
+        center_layout.addWidget(self.recommendation_label) 
         main_layout.addLayout(center_layout)
 
         self.label_info = QLabel(self)
@@ -154,7 +163,42 @@ class GuideUserInterface(QWidget):
         info_text += f"Nivel de Zoom: {self.zoom_level * 100:.0f}%\n"
 
         self.label_info.setText(info_text)
+        self.showRecommendations(class_percentages)
 
+    def showRecommendations(self, class_percentages):
+        """Mostrar recomendaciones espec+ificas basadas en los porcentajes encontrados"""
+        recommendation_text = "Recomendaciones:\n"
+
+        # Definir umbrales y recomendaciones
+        thresholds_and_recommendations = {
+            'Botritis Etapa 1': {
+                'threshold': 1.5,
+                'text': "*Botritis Etapa 1 sobre el umbral detectado. Se recomienda inspeccionar las áreas afectadas y aplicar fungicidas preventivos."
+            },
+            'Botritis Etapa 2': {
+                'threshold': 1.5,
+                'text': "*Botritis Etapa 2 sobre el umbral detectado. Se recomienda eliminar las plantas afectadas y aplicar fungicidas más potentes."
+            },
+            'Botritis Etapa 3': {
+                'threshold': 1.5,
+                'text': "*Botritis Etapa 3 sobre el umbral detectado. Es crítico eliminar las plantas severamente afectadas para evitar la propagación."
+            },
+            'Deficiencias Nutricionales': {
+                'threshold': 1.5,
+                'text': "*Deficiencias nutricionales sobre el umbral detectadas. Es recomendable realizar un análisis de suelo y ajustar los fertilizantes."
+            }
+        }
+
+        # Comparar porcentajes y mostrar recomendaciones adecuadas
+        for class_name, data in thresholds_and_recommendations.items():
+            if class_name in class_percentages and class_percentages[class_name] > data['threshold']:
+                recommendation_text += f"{data['text']}\n"
+
+        # Actualizar la etiqueta de recomendaciones
+        self.recommendation_label.setText(recommendation_text)
+        font = self.recommendation_label.font()
+        font.setPointSize(12)  
+        self.recommendation_label.setFont(font)
 
     def loadImage(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Abrir Imagen', '', 'Image Files (*.png *.jpg *.jpeg *.bmp)')
