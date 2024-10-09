@@ -336,5 +336,5 @@ class GuideUserInterface(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = GuideUserInterface('model_Unet_46_checkpoint_epoch_40.pt')
+    ex = GuideUserInterface('model_Unet__46_checkpoint_epoch_40_v2.pt')
     sys.exit(app.exec())
