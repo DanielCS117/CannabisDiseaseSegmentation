@@ -518,15 +518,3 @@ Dataset and DataLoader setup for training and testing.
     
 
 
-📊 Resultados de Ejemplo    
-    Puedes incluir algunas capturas de pantalla o imágenes con ejemplos de predicciones. 📸
-
-🚩 Pendientes o Mejoras Futuras 
-    Optimización del rendimiento del modelo.
-
-    Implementar más métricas de evaluación (IoU, Dice).
-
-    Exportar resultados como imágenes o archivos JSON con las máscaras segmentadas.
-
-📜 Licencia 
-    Este proyecto está licenciado bajo la licencia MIT.
