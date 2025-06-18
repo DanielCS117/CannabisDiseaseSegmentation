@@ -1,6 +1,12 @@
+#Ignored elements
 myenv/
-Images For Inference/
-assets/
-*.jpg
-*.png
 *.pt
+
+# Exceptions
+!model_Unet__46_checkpoint_epoch_40_v2.pt
+!Images for Inference/
+!assets/
+!json/
+!*.json
+!*.jpg
+!*.png

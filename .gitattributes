@@ -1,0 +1,11 @@
+# JPG Files in Images for Inference
+"Images for Inference/*.jpg" filter=lfs diff=lfs merge=lfs -text
+
+# All files in assets
+assets/* filter=lfs diff=lfs merge=lfs -text
+
+# All JSON files
+json/*.json filter=lfs diff=lfs merge=lfs -text
+
+# Specific PT Model
+model_Unet__46_checkpoint_epoch_40_v2.pt filter=lfs diff=lfs merge=lfs -text
