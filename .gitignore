@@ -1,4 +1,6 @@
-myenv/
+assets/
 Images For Inference/
+myenv/
 *.pt
 *.jpg
+*.png
