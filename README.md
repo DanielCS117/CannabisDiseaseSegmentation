@@ -6,13 +6,13 @@
 This project implements a semantic segmentation model to detect 6 classes, 3 of them corresponding to diseases in cannabis plants, 1 related to their nutrition, and support classes for the model operation (healthy plants and background) from general images. It uses a dataset in COCO format, and has a graphical interface that facilitates the visualization of the inference results, superimposing the predicted mask on the evaluated image.
 
 <p align="center">
-  <img src="assets/scene.png" width="200"/>
+  <img src="assets/scene.png" width="300"/>
 </p>
 
 <p align="center"><em>Figure 1. Cannabis Plant scene</em></p>
 
 
-### Class Definitions
+### Class Overview
 
 The model segments cannabis plant images into the following semantic classes:
 
@@ -21,9 +21,9 @@ The model segments cannabis plant images into the following semantic classes:
 | 0  | Background         | Non-plant area                       |
 | 1  | Healthy Plants       | Cannabis leaves without visible symptoms                       |
 | 2  | Botrytis 1       | Early-stage fungal infection (brown spots)            |
-| 3  | Botrytis 2      | Moderate Botrytis             |
+| 3  | Botrytis 2      | Moderate Botrytis (brown/purple leaves)             |
 | 4  | Botrytis 3          | Advanced infection (necrosis, dryness)             |
-| 5  | Nutritional Deficiencies          | Yellowing, spotting due to lack of N/P/K                 |
+| 5  | Nutritional Deficiencies          | Yellowing, burned edges, spotting due to lack of N/P/K                 |
 
 According to the classes, all morphologic disease can be identified as: 
 
@@ -33,11 +33,13 @@ According to the classes, all morphologic disease can be identified as:
 
 <p align="center"><em>Figure 2. Healthy Plant</em></p>     
 
+
 <p align="center">
   <img src="assets/botritis1.png" width="150"/>
 </p>
 
 <p align="center"><em>Figure 3. Botrytis 1</em></p>    
+
 
 <p align="center">
   <img src="assets/botritis2.png" width="150"/>
@@ -45,17 +47,20 @@ According to the classes, all morphologic disease can be identified as:
 
 <p align="center"><em>Figure 4. Botrytis 2</em></p>    
 
+
 <p align="center">
   <img src="assets/botritis3.png" width="150"/>
 </p>
 
 <p align="center"><em>Figure 5. Botrytis 3</em></p>    
 
+
 <p align="center">
   <img src="assets/deficiencies.png" width="150"/>
 </p>
 
 <p align="center"><em>Figure 6. Nutritional deficiencies</em></p>    
+
 
 ## 🔁 PROJECT PIPELINE
 
@@ -65,25 +70,26 @@ C --> D[Model Training (UNet + ResNet101)]
 D --> E[Model Saving (.pt file)]  
 E --> F[GUI Inference with Mask Overlay] 
 
-🔹 A: Manual Annotation (Supervisely)"
+🔹 A: Manual Annotation (Supervisely)
 
 The annotation process was carried out using Supervisely, a tool that allows precise labeling of semantic classes.
-Each region of interest (disease symptoms, nutrient issues, healthy areas) was labeled using polygon tools.
+Each region of interest (disease symptoms, nutrient issues, healthy areas) was labeled using polygon tools, grouping as many leaves of the same class as possible.
 Annotations were exported in COCO format for later use in PyTorch pipelines.
 
 <p align="center">
   <img src="assets/partial-label.png" width="350"/>
 </p>
-<p align="center"><em>Figure 5. Botrytis 3</em></p>    
+<p align="center"><em>Figure 7. Partial labeling</em></p>    
 
 🔹 B: COCO JSON Parsing
 A custom Python class was implemented to load and convert COCO-format annotations into image-mask pairs.
 Each pixel in the mask corresponds to a class ID, enabling semantic segmentation training.
-The class:
+The custom dataset class includes the following features:
 
 * Parses annotation masks per image into multi-channel tensors (one channel per class):
 
-    ```def _generate_masks(self, annotations, image_size):
+    ```
+    def _generate_masks(self, annotations, image_size):
         """
         Generates binary masks for all defined classes based on annotations.
 
@@ -118,7 +124,8 @@ The class:
 
 * Computes class frequencies and derives normalized class weights to address imbalance.
 
-    ```def _calculate_class_frequencies(self):
+    ```
+    def _calculate_class_frequencies(self):
         """
         Calculates the pixel area covered by each class across all images.
 
@@ -170,7 +177,8 @@ The class:
 
 * Supports __getitem__, __len__, and a custom collate_fn for batching.
 
-    ```def custom_collate_fn(batch):
+    ```
+    def custom_collate_fn(batch):
     """
     Custom collate function to batch images and masks for DataLoader.
 
@@ -199,7 +207,8 @@ The class:
 
     * Conversion to tensor format.
 
-    ```split1 = "train"
+    ```
+    split1 = "train"
     coco_json_file1 = r'Base de Datos\train\annotations\train_data1024.json'
     split2 = "test"
     coco_json_file2 = r'Base de Datos\test\annotations\test_data1024.json'
@@ -211,6 +220,8 @@ The class:
     ])
 
     
+
+    
 🔹 C: Dataset & Dataloader Definition
 The dataset class is compatible with PyTorch and uses Dataset and DataLoader to load mini-batches. This ensures compatibility with the model input.
 
@@ -220,6 +231,8 @@ The dataset class is compatible with PyTorch and uses Dataset and DataLoader to 
         dataset_test = CocoSemSegUNET(coco_json_file2, split2, transform=transform)
         dataloader_test = data.DataLoader(dataset_test, batch_size=1, shuffle=True, collate_fn=custom_collate_fn)
         dataset_used = "RAW 6 Classes"
+
+Also, in this section was included a script to visually verify sample image-mask pairs, class by class and full.
 
 🔹 D: Model Training (UNet + ResNet101)
 The training pipeline uses Segmentation Models PyTorch (SMP) with a UNet architecture and ResNet101 backbone.
@@ -263,7 +276,7 @@ This file can later be loaded for inference or deployment in other environments 
 
 🔹 F: GUI Inference with Mask Overlay
 A graphical user interface built with PyQt6 allows users to load images and perform inference locally.
-Predicted masks are overlayed on the original image with adjustable transparency, aiding visual interpretation.
+Predicted masks are overlayed on the original image with adjustable transparency, aiding visual interpretation. A virtual environment was necessary to avoid compatibility issues. 
 
 The main functions include methods to calculate the pixels per class (to determine the percentages of regions of each class), a method to initialize the model and load the weights trained for the task, a method to update the prediction labels, another to define correction recommendations, another to load an external image, and others to generate the prediction mask overlay. Of course, there are also the standard methods for manipulating interface parameters (zoom, transparency and buttons) and the general methods for running the application. 
 
@@ -273,7 +286,7 @@ The main functions include methods to calculate the pixels per class (to determi
 
 Semantic segmentation proved to be the most viable approach for this project compared to image classification and object detection. This is because it allows multiple defects within a single image to be identified with greater spatial accuracy, even in complex scenes where objects exhibit different shapes, sizes, directions and levels of grouping.
 
-The U-Net based model with ResNet-101 encoder showed acceptable visual performance in the classes with the highest representation in the database, particularly in healthy leaves, leaves with stage 1 Botrytis and leaves with nutritional deficiencies. This is evidence of the encoder's ability to extract relevant patterns in these types of problems.
+The U-Net-based model with ResNet-101 encoder showed acceptable visual performance in the classes with the highest representation in the database, particularly in healthy leaves, leaves with stage 1 Botrytis and leaves with nutritional deficiencies. This is evidence of the encoder's ability to extract relevant patterns in these types of problems.
 
 ⚠️ Difficulties encountered
 
@@ -304,30 +317,30 @@ These ambiguities affected the model's ability to correctly differentiate betwee
 <p align="center">
   <img src="assets/paralelpred46.png" width="350"/>
 </p>
-<p align="center"><em>Figure. Parallel prediction</em></p>   
+<p align="center"><em>Figure 8. Parallel prediction</em></p>   
 
 <p align="center">
-  <img src="assets/app46.png" width="350"/>
+  <img src="assets/app46.png" width="550"/>
 </p>
-<p align="center"><em>Figure 5. GUI prediction</em></p>    
+<p align="center"><em>Figure 9. GUI prediction</em></p>    
 
 <p align="center">
-  <img src="assets/plots46.png" width="350"/>
+  <img src="assets/plots46.png" width="550"/>
 </p>
-<p align="center"><em>Figure 5. Metrics results</em></p>    
-
-    Puedes incluir algunas capturas de pantalla o imágenes con ejemplos de predicciones. 📸
+<p align="center"><em>Figure 10. Metrics results</em></p>    
 
 
-## REPOSITORY SCTRUCTRE
+
+## 📁 Repository Structure
 Root    
+├── Database/                            # Database Folder
 ├── Final_Interface2_2.py               # Graphic interface   
 ├── Pytorch_COCO_SEGMENTATION.ipynb     # Training and Inference Notebook  
-├── README.md                           # Proyect Documentation    
-└── LICENSE                             # Proyect Licence     
+├── README.md                           # Project Documentation    
+└── LICENSE                             # Project License     
  
-## 🚀 Features
-✅ Custom dataset class converting COCO JSON into (image, mask) pairs labeled from SuperViseLY. 
+## 🚀 Summary Features
+✅ Custom dataset class converting COCO JSON into (image, mask) pairs labeled from Supervisely. 
 
 ✅ Batch generation with PyTorch Dataset and DataLoader
 
@@ -340,181 +353,102 @@ Root
 ✅ COCO-compliant annotation processing
 
 ## 🛠️ Technologies
-Python 3.x
+* Python 3.x
 
-PyTorch & torchvision
+* PyTorch & torchvision
 
-Segmentation Models PyTorch (SMP)
+* Segmentation Models PyTorch (SMP)
 
-PyQt6 (for GUI)
+* PyQt6 (for GUI)
 
-Supervisely (for annotation)
+* Supervisely (for annotation)
 
-COCO JSON format
+* COCO JSON format
 
-📌 How to Run
+# 📌 Reproducibility Instructions
+
 Clone the repo:
 
-git clone https://github.com/DanielCS117/Cannabis-Disease
+```
+git clone https://github.com/DanielCS117/CannabisDiseaseSegmentation
+```
 
-Install requirements:
+## 1. Virtual Environment Setup
 
+
+It's recommended to use a Python virtual Environment, which can be created with:
+
+For Windows: 
+```
+python -m venv myenv        # For virtual environment
+myenv/Scripts/activate.bat  # For virtual environment activation 
+```
+For Linux/Mac:
+
+```
+source myenv/bin/activate  
+```
+
+Then install the required dependencies (you can export your environment to a requirements.txt or install manually)
+
+
+## 2. Model Training (via Jupyter Notebook)
+
+
+Open the notebook Pytorch_COCO_SEMANTIC_SEGMENTATION_CANNABIS_PLANTS.ipynb in JupyterLab or VSCode and run each section in order. This notebook contains:
+
+* Loading and parsing COCO-formatted annotations.
+
+* Dataset and DataLoader setup.
+
+* U-Net + ResNet101 model definition.
+
+* Training and validation loops.
+
+* Saving the best performing .pt model checkpoint. 
+
+* Evaluate training results by displaying the predicted mask alongside the original image.
+
+📎 Important: Make sure your json annotations and image folders are correctly linked in the paths defined inside the notebook.
+
+
+## 3. GUI Inference (via Python Script)
+
+
+Once the model is trained and saved (e.g., model_Unet__46_checkpoint_epoch_40_v2.pt in this case), run the GUI by executing:
+
+```python Final_Interface_2_2.py```
+
+In the GUI, you can:
+
+* Load any image.
+
+* Run inference using the trained model.
+
+* Visualize the predicted segmentation mask overlaid on the image.
+
+* Adjust transparency and zoom and show/hide mask to evaluate the healthy or diseased regions.
+
+* Get class-wise pixel percentages and condition recommendations according to the detections.
+
+⚠️ Note: The GUI automatically loads the model from the .pt path hardcoded in the script. Modify the path if necessary or if you obtained a better model using Pytorch_COCO_SEMANTIC_SEGMENTATION_CANNABIS_PLANTS.ipynb file.
+
+## 4. Requirements.txt
+
+Install the dependencies with: 
+
+```
 pip install -r requirements.txt
-Train model (see the notebook).
+```
+## 5. Dataset Folder Structure (Optional but Recommended)
 
-Run GUI:
-
-python Final_Interface2_2.py
-
-```  import os
-import numpy as np
-import random
-import torch
-import torchvision
-import torchvision.utils as utils
-from torchvision import io, transforms
-import torchvision.transforms.functional as TF
-import torchvision.transforms as T
-import torch.utils.data as data
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-import segmentation_models_pytorch as smp
-import torch.optim as optim
-from PIL import Image, ImageOps, ImageFilter
-from pycocotools.coco import COCO
-from tqdm.auto import tqdm
-from pycocotools.coco import COCO
-import json
-
-import matplotlib.pyplot as plt
-%matplotlib inline
-
-os.chdir(r"E:\OneDrive\Universidad Autónoma de Bucaramanga\Proyecto de Grado II\Desarrollo\Programa Local")
-
-class CocoSemSegUNET(data.Dataset):
-    """
-    PyTorch Dataset for semantic segmentation using COCO-style annotations.
-
-    This dataset handles six semantic classes of plant conditions and computes
-    class frequencies and weights based on annotated areas for training with 
-    class imbalance compensation.
-
-    Attributes:
-        coco (COCO): COCO annotation API object.
-        image_ids (list): List of image IDs from COCO annotations.
-        transform (callable): Transformations to apply to the images.
-        split (str): Dataset split ("train" or "test").
-        class_names (list): List of class names.
-        num_classes (int): Number of classes.
-        class_frequencies (np.ndarray): Frequency of each class.
-        class_weights (torch.Tensor): Computed weight for each class.
-    """
-    def __init__(self, coco_json_file, split, transform=None):
-        """
-        Initialize the dataset.
-
-        Args:
-            coco_json_file (str): Path to the COCO annotation JSON file.
-            split (str): Dataset split ("train" or "test").
-            transform (callable, optional): Image transformation function.
-        """
-    def _calculate_class_frequencies(self):
-        """
-        Calculates the pixel area covered by each class across all images.
-
-        Returns:
-            np.ndarray: Array of class frequencies (total area per class).
-        """
-        
-    def _calculate_class_weights(self):
-        """
-        Computes class weights inversely proportional to class area frequency.
-
-        Returns:
-            torch.Tensor: Normalized class weights as a tensor.
-        """
-    def __getitem__(self, index):
-        """
-        Retrieves the transformed image and multi-channel binary mask for a given index.
-
-        Args:
-            index (int): Index of the image to load.
-
-        Returns:
-            tuple: Transformed image (Tensor) and masks (Tensor).
-        """
-    def __len__(self):
-        """
-        Returns the number of images in the dataset.
-
-        Returns:
-            int: Length of the dataset.
-        """
-    def _generate_masks(self, annotations, image_size):
-        """
-        Generates binary masks for all defined classes based on annotations.
-
-        Args:
-            annotations (list): List of annotations for a single image.
-            image_size (tuple): (width, height) of the image.
-
-        Returns:
-            torch.Tensor: Multi-channel mask tensor with one channel per class.
-        """
-    def get_class_weights(self):
-        """
-        Returns the computed class weights.
-
-        Returns:
-            torch.Tensor: Class weights tensor.
-        """
-
-def custom_collate_fn(batch):
-    """
-    Custom collate function to batch images and masks for DataLoader.
-
-    Args:
-        batch (list): List of (image, mask) tuples.
-
-    Returns:
-        tuple: Batched images and masks.
-    """
-"""
-Dataset and DataLoader setup for training and testing.
-
-- Defines common image transformations.
-- Initializes training and testing datasets using COCO-style annotations.
-- Creates DataLoaders with a custom collate function.
-- Prints class frequencies and computed class weights for both splits.
-"""
-
- ```
-⚙️ Funcionalities
-    Dataset reading and handling:
-
-    Loading JSON files in COCO format.
-
-    Dataset and DataLoader object construction.
-
-    Generation of batches and minibatches for training.
-
-    Graphical visualization of each image-mask pair.
-
-    Model training:
-
-    Architecture definition (you can specify if you use U-Net, DeepLab, etc.).
-
-    Hyperparameters configuration.
-
-    Training loop with periodic validation.
-
-    Inference and visualization:
-
-    Dedicated script to evaluate new images.
-
-    Graphical interface with tools to load images, run inferences and visualize results with overlay masks.
-
-    
-
+Make sure to include sample images and corresponding annotation files (COCO format) in the correct folder structure:
+```
+    Database/
+    ├─ train/
+    │   ├── images/
+    │   └── annotations/
+    ├─ test/
+    │   ├── images/
+    │   └── annotations/
 
