@@ -1,12 +1,14 @@
 #Ignored elements
 myenv/
+outputs/**
 *.pt
 
 # Exceptions
 !model_Unet__46_checkpoint_epoch_40_v2.pt
-!Images for Inference/
+!Database/
+!Database/**
+!inference_inputs/
 !assets/
-!json/
 !*.json
 !*.jpg
 !*.png
