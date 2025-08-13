@@ -12,7 +12,7 @@ import segmentation_models_pytorch as smp
 class GuideUserInterface(QWidget):
     def __init__(self, model_path):
         super().__init__()
-        self.title = 'Predicción con U-Net'
+        self.title = 'Cannabis Disease Segmentation'
         self.left = 0
         self.top = 0
         self.width = 1280
@@ -41,12 +41,12 @@ class GuideUserInterface(QWidget):
 
         legend_layout = QHBoxLayout()
         self.legends = {
-            'Fondo': (0, 0, 0),
-            'Plantas Sanas': (0, 255, 0),
-            'Botritis Etapa 1': (165, 42, 42),
-            'Botritis Etapa 2': (128, 0, 128),
-            'Botritis Etapa 3': (255, 165, 0),
-            'Deficiencias Nutricionales': (255, 255, 0)
+            'Non-plant area': (0, 0, 0),
+            'Healthy Plants': (0, 255, 0),
+            'Early Botrytis (Stage 1)': (165, 42, 42),
+            'Advanced Botrytis (Stage 2)': (128, 0, 128),
+            'Non-reverse Botrytis (Stage 3)': (255, 165, 0),
+            'Nutritional Deficiencies': (255, 255, 0)
         }
 
         for name, color in self.legends.items():
@@ -77,7 +77,7 @@ class GuideUserInterface(QWidget):
         center_layout.addStretch(1)
 
          
-        # Recomendaciones
+        # Recomendations
         self.recommendation_label = QLabel(self)
         self.recommendation_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.recommendation_label.setWordWrap(True)
@@ -90,17 +90,17 @@ class GuideUserInterface(QWidget):
         main_layout.addWidget(self.label_info)
 
         button_layout = QHBoxLayout()
-        self.btn = QPushButton('Cargar imagen', self)
+        self.btn = QPushButton('Load image', self)
         self.btn.clicked.connect(self.loadImage)
         button_layout.addWidget(self.btn)
 
-        self.toggle_button = QPushButton(r'Mostrar/Ocultar', self)
+        self.toggle_button = QPushButton(r'Show/Hide', self)
         self.toggle_button.clicked.connect(self.toggle_mask)
         button_layout.addWidget(self.toggle_button)
 
         sliders_layout = QVBoxLayout()
 
-        self.mask_transparency_label = QLabel('Transparencia', self)
+        self.mask_transparency_label = QLabel('Transparency', self)
         sliders_layout.addWidget(self.mask_transparency_label)
 
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -140,71 +140,71 @@ class GuideUserInterface(QWidget):
             classes=num_classes
         )
         try:
-            print("Cargando Modelo...")
+            print("Loading Model...")
             state_dict = torch.load(self.model_path, map_location=torch.device('cpu'))
             self.model_inference.load_state_dict(state_dict)
             self.model_inference.eval()
-            print("Modelo Cargado")
+            print("Model Loaded")
         except Exception as e:
-            error_m = f"Error cargando el modelo: {e}"
+            error_m = f"Loading Model Error: {e}"
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 
     def updateInfoLabel(self, class_pixels, class_percentages):
-        info_text = "Píxeles de Clase:\n"
+        info_text = "Class pixels:\n"
         for class_name, pixels in class_pixels.items():
             info_text += f"{class_name}: {pixels} pixels\n"
-        info_text += "\nPorcentajes de clase:\n"
+        info_text += "\nClass percentages:\n"
         for class_name, percentage in class_percentages.items():
             info_text += f"{class_name}: {percentage:.2f}%\n"
         
         
-        info_text += f"\nTransparencia de la máscara: {self.mask_alpha * 100:.0f}%\n"
-        info_text += f"Nivel de Zoom: {self.zoom_level * 100:.0f}%\n"
+        info_text += f"\nMask transparency: {self.mask_alpha * 100:.0f}%\n"
+        info_text += f"Zoom: {self.zoom_level * 100:.0f}%\n"
 
         self.label_info.setText(info_text)
         self.showRecommendations(class_percentages)
 
     def showRecommendations(self, class_percentages):
-        """Mostrar recomendaciones espec+ificas basadas en los porcentajes encontrados"""
-        recommendation_text = "Recomendaciones:\n"
+        """Show specific recommendations based on the percentages found"""
+        recommendation_text = "Recomendations:\n"
 
-        # Definir umbrales y recomendaciones
+        # Defining thresholds and recommendations
         thresholds_and_recommendations = {
-            'Botritis Etapa 1': {
+            'Early Botrytis (Stage 1)': {
                 'threshold': 1.5,
-                'text': "*Botritis Etapa 1 sobre el umbral detectado. Se recomienda inspeccionar las áreas afectadas y aplicar fungicidas preventivos."
+                'text': "*Early Botrytis above the threshold detected. It is recommended to inspect the affected areas and apply preventive fungicides."
             },
-            'Botritis Etapa 2': {
+            'Advanced Botrytis (Stage 2)': {
                 'threshold': 1.5,
-                'text': "*Botritis Etapa 2 sobre el umbral detectado. Se recomienda eliminar las plantas afectadas y aplicar fungicidas más potentes."
+                'text': "*Advanced Botrytis above the detected threshold. It is recommended to remove affected plants and apply more powerful fungicides."
             },
-            'Botritis Etapa 3': {
+            'Non-reverse Botrytis (Stage 3)': {
                 'threshold': 1.5,
-                'text': "*Botritis Etapa 3 sobre el umbral detectado. Es crítico eliminar las plantas severamente afectadas para evitar la propagación."
+                'text': "*Non-reverse Botrytis above the threshold detected. It is critical to remove severely affected plants to prevent spread."
             },
-            'Deficiencias Nutricionales': {
+            'Nutritional Deficiencies': {
                 'threshold': 1.5,
-                'text': "*Deficiencias nutricionales sobre el umbral detectadas. Es recomendable realizar un análisis de suelo y ajustar los fertilizantes."
+                'text': "*Nutritional deficiencies above the threshold detected. It is advisable to perform a soil analysis and adjust the fertilizers."
             }
         }
 
-        # Comparar porcentajes y mostrar recomendaciones adecuadas
+        # Comparing percentages and display appropriate recommendations
         for class_name, data in thresholds_and_recommendations.items():
             if class_name in class_percentages and class_percentages[class_name] > data['threshold']:
                 recommendation_text += f"{data['text']}\n"
 
-        # Actualizar la etiqueta de recomendaciones
+        # Updating the recommendations label
         self.recommendation_label.setText(recommendation_text)
         font = self.recommendation_label.font()
         font.setPointSize(12)  
         self.recommendation_label.setFont(font)
 
     def loadImage(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, 'Abrir Imagen', '', 'Image Files (*.png *.jpg *.jpeg *.bmp)')
+        fileName, _ = QFileDialog.getOpenFileName(self, 'Open Image', '', 'Image Files (*.png *.jpg *.jpeg *.bmp)')
         if fileName:
             try:
-                print(f'Cargando Imagen: {fileName}')
+                print(f'Loading Image: {fileName}')
                 image = Image.open(fileName).convert('RGB')
                 self.image = image
 
@@ -215,7 +215,7 @@ class GuideUserInterface(QWidget):
                 ])
 
                 input_image = preprocess(image).unsqueeze(0)
-                print('Realizando Predicción')
+                print('Performing prediction')
                 with torch.no_grad():
                     output = self.model_inference(input_image)
                 predicted_masks = torch.argmax(output, dim=1)
@@ -223,7 +223,7 @@ class GuideUserInterface(QWidget):
                 self.predicted_mask = predicted_masks_np
 
                 class_pixels, total_pixels = self.calculate_class_pixels(predicted_masks_np)
-                class_names = ['Fondo', 'Plantas Sanas', 'Botritis Etapa 1', 'Botritis Etapa 2', 'Botritis Etapa 3', 'Deficiencias Nutricionales']
+                class_names = ['Non-plant area', 'Healthy Plants', 'Early Botrytis (Stage 1)', 'Advanced Botrytis (Stage 2)', 'Non-reverse Botrytis (Stage 3)', 'Nutritional Deficiencies']
                 class_percentages = {class_names[key]: value / total_pixels * 100 for key, value in class_pixels.items()}
                 self.updateInfoLabel(class_pixels, class_percentages)
                 self.overlay_img = self.create_overlay_image(self.image, self.predicted_mask)
@@ -231,41 +231,41 @@ class GuideUserInterface(QWidget):
                 self.class_pixels = class_pixels
                 self.class_percentages = class_percentages
                 self.updateInfoLabel(self.class_pixels, self.class_percentages)
-                print('Imagen cargada y procesada exitosamente.')
+                print('Image successfully uploaded and processed.')
             except Exception as e:
-                print(f'Error cargando imagen: {e}')
+                print(f'Error loading image: {e}')
 
     def display_image_with_mask(self):
         try:
         
-            print('Mostrando imagen con máscara...')
+            print('Showing image with mask...')
             if self.overlay_img is None:
                 return
             overlay_img = self.overlay_img.copy()
             overlay_img = overlay_img.convert("RGB")
             new_size = (int(1024 * self.zoom_level), int(1024 * self.zoom_level))
-            print(f'Nuevo Tamaño de imagen: {new_size}')
+            print(f'New Image Size: {new_size}')
             overlay_img = overlay_img.resize(new_size, Image.Resampling.LANCZOS)
             overlay_img_qt = ImageQt.ImageQt(overlay_img)
             pixmap = QPixmap.fromImage(overlay_img_qt)
             self.image_label.setPixmap(pixmap)
             self.image_label.resize(pixmap.size())
         except Exception as e:
-            error_m = f'Error mostrando imagen con Máscara: {e}'
+            error_m = f'Error showing image with mask: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 
     def create_overlay_image(self, image, mask):
         try:
-            print('Superponiendo máscara...')
+            print('Overlaying mask...')
             image_resized = image.resize((1024, 1024))
             class_colors = {
                 0: (0, 0, 0, 0),  # Fondo
-                1: (0, 255, 0, int(self.mask_alpha * 255)),  # Plantas Sanas
-                2: (165, 42, 42, int(self.mask_alpha * 255)),  # Botritis Etapa 1
-                3: (128, 0, 128, int(self.mask_alpha * 255)),  # Botritis Etapa 2
-                4: (255, 165, 0, int(self.mask_alpha * 255)),  # Botritis Etapa 3
-                5: (255, 255, 0, int(self.mask_alpha * 255))   # Deficiencias Nutricionales
+                1: (0, 255, 0, int(self.mask_alpha * 255)),  # Healthy Plants
+                2: (165, 42, 42, int(self.mask_alpha * 255)),  # Botrytis Stage 1
+                3: (128, 0, 128, int(self.mask_alpha * 255)),  # Botrytis Stage 2
+                4: (255, 165, 0, int(self.mask_alpha * 255)),  # Botrytis Stage 3
+                5: (255, 255, 0, int(self.mask_alpha * 255))   # Nutritional Deficiencies
             }
             overlay = Image.new('RGBA', image_resized.size)
             for class_id, color in class_colors.items():
@@ -275,7 +275,7 @@ class GuideUserInterface(QWidget):
             combined = Image.alpha_composite(image_resized.convert('RGBA'), overlay)
             return combined.convert('RGB')
         except Exception as e:
-            error_m = f'Error creando imagen superpuesta: {e}'
+            error_m = f'Error creating overlay image: {e}'
             print(error_m)
             return None
 
@@ -287,7 +287,7 @@ class GuideUserInterface(QWidget):
             else:
                 self.display_image(self.image)
         except Exception as e:
-            error_m = f'Error al alternar la máscara: {e}'
+            error_m = f'Error when switching masks: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 
@@ -297,7 +297,7 @@ class GuideUserInterface(QWidget):
 
             self.transparency_value_label.setText(f'{int(self.mask_alpha * 100)}%')
             
-            print(f'Transparencia actualizada: {self.mask_alpha * 100}%')
+            print(f'Updated transparency: {self.mask_alpha * 100}%')
 
             if self.image is not None and self.predicted_mask is not None:
                 self.overlay_img = self.create_overlay_image(self.image, self.predicted_mask)
@@ -305,7 +305,7 @@ class GuideUserInterface(QWidget):
             self.transparency_value_label.repaint()
             
         except Exception as e:
-            error_m = f'Error actualizando transparencia: {e}'
+            error_m = f'Error updating transparency: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 
@@ -321,7 +321,7 @@ class GuideUserInterface(QWidget):
 
     def display_image(self, image):
         try:
-            print('Mostrando imagen...')
+            print('Displaying image...')
             new_size = (int(1024 * self.zoom_level), int(1024 * self.zoom_level))
             image_resized = image.resize(new_size, Image.Resampling.LANCZOS)
             image_qt = ImageQt.ImageQt(image_resized)
@@ -329,7 +329,7 @@ class GuideUserInterface(QWidget):
             self.image_label.setPixmap(pixmap)
             self.image_label.resize(pixmap.size())
         except Exception as e:
-            error_m = f'Error mostrando imagen: {e}'
+            error_m = f'Showing image error: {e}'
             print(error_m)
             QMessageBox.critical(self, 'Error', error_m)
 

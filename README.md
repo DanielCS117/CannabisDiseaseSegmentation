@@ -333,11 +333,11 @@ These ambiguities affected the model's ability to correctly differentiate betwee
 
 ## 📁 Repository Structure
 Root    
-├── Database/                            # Database Folder
-├── Final_Interface2_2.py               # Graphic interface   
-├── Pytorch_COCO_SEGMENTATION.ipynb     # Training and Inference Notebook  
-├── README.md                           # Project Documentation    
-└── LICENSE                             # Project License     
+├── Database/                                   # Database Folder  
+├── cannabis_segmentation_gui.py                # Graphic interface   
+├── cannabis_segmentation_training.ipynb        # Training and Inference Notebook  
+├── README.md                                   # Project Documentation    
+└── LICENSE                                     # Project License     
  
 ## 🚀 Summary Features
 ✅ Custom dataset class converting COCO JSON into (image, mask) pairs labeled from Supervisely. 
@@ -395,7 +395,7 @@ Then install the required dependencies (you can export your environment to a req
 ## 2. Model Training (via Jupyter Notebook)
 
 
-Open the notebook Pytorch_COCO_SEMANTIC_SEGMENTATION_CANNABIS_PLANTS.ipynb in JupyterLab or VSCode and run each section in order. This notebook contains:
+Open the notebook cannabis_segmentation_training.ipynb in JupyterLab or VSCode and run each section in order. This notebook contains:
 
 * Loading and parsing COCO-formatted annotations.
 
@@ -417,7 +417,7 @@ Open the notebook Pytorch_COCO_SEMANTIC_SEGMENTATION_CANNABIS_PLANTS.ipynb in Ju
 
 Once the model is trained and saved (e.g., model_Unet__46_checkpoint_epoch_40_v2.pt in this case), run the GUI by executing:
 
-```python Final_Interface_2_2.py```
+```python cannabis_segmentation_gui.py```
 
 In the GUI, you can:
 
@@ -431,7 +431,7 @@ In the GUI, you can:
 
 * Get class-wise pixel percentages and condition recommendations according to the detections.
 
-⚠️ Note: The GUI automatically loads the model from the .pt path hardcoded in the script. Modify the path if necessary or if you obtained a better model using Pytorch_COCO_SEMANTIC_SEGMENTATION_CANNABIS_PLANTS.ipynb file.
+⚠️ Note: The GUI automatically loads the model from the .pt path hardcoded in the script. Modify the path if necessary or if you obtained a better model using cannabis_segmentation_training.ipynb file.
 
 ## 4. Requirements.txt
 
