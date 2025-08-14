@@ -391,8 +391,23 @@ source myenv/bin/activate
 
 Then install the required dependencies (you can export your environment to a requirements.txt or install manually)
 
+## 2. Requirements (CPU Default)
 
-## 2. Model Training (via Jupyter Notebook)
+Install the dependencies with: 
+
+```
+pip install -r requirements.txt
+```
+### 2.1. CUDA 11.8.
+
+If you have a compatible GPU, you can install PyTorch with cuda running the following script: 
+
+```
+pip install torch==2.2.1+cu118 torchvision==0.17.1+cu118 torchaudio==2.2.1 --extra-index-url https://download.pytorch.org/whl/cu118
+```
+Then, you will have to create a workspace for the Folder (in VSC) and define a kernel for the virtual enviroment. Finally, you will be able to use your GPU to train the model.
+
+## 3. Model Training (via Jupyter Notebook)
 
 
 Open the notebook cannabis_segmentation_training.ipynb in JupyterLab or VSCode and run each section in order. This notebook contains:
@@ -412,7 +427,7 @@ Open the notebook cannabis_segmentation_training.ipynb in JupyterLab or VSCode a
 📎 Important: Make sure your json annotations and image folders are correctly linked in the paths defined inside the notebook.
 
 
-## 3. GUI Inference (via Python Script)
+## 4. GUI Inference (via Python Script)
 
 
 Once the model is trained and saved (e.g., model_Unet__46_checkpoint_epoch_40_v2.pt in this case), run the GUI by executing:
@@ -433,16 +448,9 @@ In the GUI, you can:
 
 ⚠️ Note: The GUI automatically loads the model from the .pt path hardcoded in the script. Modify the path if necessary or if you obtained a better model using cannabis_segmentation_training.ipynb file.
 
-## 4. Requirements.txt
-
-Install the dependencies with: 
-
-```
-pip install -r requirements.txt
-```
 ## 5. Dataset Folder Structure (Optional but Recommended)
 
-Make sure to include sample images and corresponding annotation files (COCO format) in the correct folder structure:
+The folders and fill will be cloned with the following structure: 
 ```
     Database/
     ├─ train/
@@ -452,3 +460,4 @@ Make sure to include sample images and corresponding annotation files (COCO form
     │   ├── images/
     │   └── annotations/
 
+If you wanna to edit this, you will have to modify the paths in the PY and IPYNB files. 
