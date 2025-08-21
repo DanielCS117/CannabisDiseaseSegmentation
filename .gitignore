@@ -2,6 +2,10 @@
 myenv/
 outputs/**
 *.pt
+cloud/__pycache__/
+cloud/__pycache__/*
+cloud/static/**/*.jpg
+cloud/static/**/*.png
 
 # Exceptions
 !model_Unet__46_checkpoint_epoch_40_v2.pt

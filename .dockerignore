@@ -1,0 +1,27 @@
+# Ignore virtual enviroments
+myenv/
+*/__pycache__/
+*.pyc
+
+# Ignore repository
+.git
+.gitignore
+.gitattributes
+
+# Ignore notebooks and GUI
+cannabis_segmentation_gui.py
+cannabis_segmentation_training.ipynb
+
+# Ignorar unnecessary folders
+assets/
+Database/
+inference_inputs/
+outputs/
+
+# Ignore PT files except the specific
+*.pt
+!model_Unet__46_checkpoint_epoch_40_v2.pt  
+
+# Ignore other unnecessary files
+README.md
+LICENSE

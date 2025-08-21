@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cannabis Disease Segmentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        .container { display: flex; flex-direction: column; align-items: center; }
+        .overlay-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .overlay-container img {
+            max-width: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: block;
+        }
+        .overlay-container img.mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0.5; /* initial value */
+        }
+        .results { margin-top: 30px; width: 70%; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 8px; }
+        .slider-container { margin-top: 15px; text-align: center; }
+        .legend-container { margin-top: 20px; }
+        .legend-container ul { list-style: none; padding: 0; }
+        .legend-container li { margin-bottom: 5px; display: flex; align-items: center; }
+        .legend-color { display:inline-block; width:20px; height:20px; margin-right:8px; border:1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cannabis Disease Segmentation</h1>
+
+        <!-- Upload Form -->
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button type="submit">Upload & Predict</button>
+        </form>
+
+        {% if result %}
+        <div class="overlay-container">
+            <img src="{{ result.original_url }}" alt="Original Image">
+            <img src="{{ result.mask_url }}" alt="Mask Image" class="mask" id="mask">
+        </div>
+
+        <!-- Slider -->
+        <div class="slider-container">
+            <label for="opacity">Mask Transparency:</label>
+            <input type="range" id="opacity" min="0" max="100" value="50">
+        </div>
+
+        <!-- Legends -->
+        <div class="legend-container">
+            <h3>Legends</h3>
+            <ul>
+                <li><span class="legend-color" style="background:rgba(0,0,0,0);"></span> Background</li>
+                <li><span class="legend-color" style="background:rgb(0,255,0);"></span> Healthy Plants</li>
+                <li><span class="legend-color" style="background:rgb(165,42,42);"></span> Early Botritis (Stage 1)</li>
+                <li><span class="legend-color" style="background:rgb(128,0,128);"></span> Advanced Botritis (Stage 2)</li>
+                <li><span class="legend-color" style="background:rgb(255,165,0);"></span> Non-reverse Botritis (Stage 3)</li>
+                <li><span class="legend-color" style="background:rgb(255,255,0);"></span> Nutritional Deficiencies</li>
+            </ul>
+        </div>
+
+        <div class="results">
+            <h3>Class Percentages</h3>
+            <pre>{{ result.class_percentages | tojson(indent=2) }}</pre>
+
+            <h3>Recommendations</h3>
+            <pre>{{ result.recommendations }}</pre>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        // Transparency
+        const slider = document.getElementById("opacity");
+        const mask = document.getElementById("mask");
+
+        if (slider && mask) {
+            slider.addEventListener("input", () => {
+                mask.style.opacity = slider.value / 100;
+            });
+        }
+    </script>
+</body>
+</html>
