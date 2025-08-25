@@ -1,7 +1,8 @@
 import os
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, UploadFile, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from cloud.inference import CannabisSegmentationModel
 from PIL import Image, ImageDraw
 import io
@@ -10,7 +11,12 @@ import uuid
 
 # Initialize
 
-app = FastAPI(title='Cannabis Disease Segmentation API')
+app = FastAPI(title='Cannabis Disease Segmentation App')
+
+static_dir = os.path.join(os.path.dirname(__file__), 'static')
+os.makedirs(static_dir, exist_ok=True)
+
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), 'templates'))
 
 modelpath = os.path.join(os.path.dirname(__file__), '..', 'model_Unet__46_checkpoint_epoch_40_v2.pt')
 model = CannabisSegmentationModel(modelpath)
@@ -32,9 +38,6 @@ class_colors = {
     4: (255, 165, 0, 255),      # Non-reverse Botrytis (Stage 3)
     5: (255, 255, 0, 255),      # Nutritional Deficiencies
 }
-
-static_dir = os.path.join(os.path.dirname(__file__), 'static')
-os.makedirs(static_dir, exist_ok=True)
 
 def create_mask_image(mask_np):
     h, w = mask_np.shape
@@ -88,11 +91,12 @@ def showRecommendations(class_percentages):
 app.mount('/static', StaticFiles(directory=static_dir), name='static')
 
 @app.get('/')
-def read_root():
-    return {'message': 'API Cannabis Disease Segmentation is running'}
+async def home(request: Request):
+    return templates.TemplateResponse('index.html', {'request': request, 'result': None})
 
 @app.post('/predict')
 async def predict(
+    request: Request,
     file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
@@ -120,13 +124,21 @@ async def predict(
 
         recommendations = showRecommendations(percentages_dict)
         
-        return JSONResponse(content={
-            'original_url': f'/static/{orig_filename}',
-            'mask_url': f'/static/{mask_filename}',
-            'class_pixels': pixels_dictionary,
-            'class_percentages': percentages_dict,
-            'recommendations': recommendations
-        })
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "result": {
+                    "original_url": f"/static/{orig_filename}",
+                    "mask_url": f"/static/{mask_filename}",
+                    "class_pixels": pixels_dictionary,
+                    "class_percentages": percentages_dict,
+                    "recommendations": recommendations,
+                },
+            },
+        )
     
     except Exception as e:
-        return JSONResponse(content={'error': str(e)}, status_code=500)
+        return templates.TemplateResponse(
+            "index.html", {"request": request, "result": {"error": str(e)}}
+        )

@@ -5,5 +5,5 @@ torchvision
 segmentation-models-pytorch
 pillow
 numpy
-flask
 python-multipart
+jinja2
