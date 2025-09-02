@@ -300,6 +300,11 @@ One of the biggest challenges was the precise delineation of contours between cl
 
 These ambiguities affected the model's ability to correctly differentiate between similar classes, and contributed to a decrease in metric performance.
 
+**Note on inference:**  
+
+The model performs best on images similar to those used during training (complete scenes of plants with multiple leaves and affected leaves).  
+We recommend using the `inference_inputs/` folder for testing, as it contains realistic validation images that were not seen by the model.
+
 📊 Metrics and analysis
 
 * The main metric was IoU (method 1), with results of 0.38 in training and 0.40 in validation.
@@ -461,3 +466,37 @@ The folders and fill will be cloned with the following structure:
     │   └── annotations/
 
 If you wanna to edit this, you will have to modify the paths in the PY and IPYNB files. 
+
+```
+
+
+# 🌐 Cloud Deployment (Google Cloud Run)
+
+Besides local execution via GUI, this project was deployed as a cloud inference service using Google Cloud Run.
+
+* Purpose: The cloud service does not train the model. Instead, it loads the pre-trained .pt weights and exposes an endpoint to perform inference on input images.
+
+* Containerization: The PyTorch model and inference logic were packaged into a Docker image.Inference logic is in inference.py, API exposed via FastAPI (app.py) with minimal HTML interface (index.html). Subsequently, the project was containerized in Docker.  
+
+* Deployment: The Docker image was stored in Artifact Registry, and the service was deployed with Cloud Run on GCP, configured to automatically scale according to demand.
+
+* Behavior:
+
+  * The service starts only when requests are received (serverless behavior).
+
+  * Inference results can be retrieved programmatically or via a minimal web UI (depending on your container code).
+
+  * This mimics the GUI’s mask overlay functionality, but accessible remotely.
+
+✅ This allows the model to be used from anywhere without needing local environment setup.
+
+Summary:
+
+* Remote inference on cannabis plant images using pre-trained UNet+ResNet101 model. No local setup or GPU required.
+* Serverless: Cloud Run automatically scales and activates only on request.
+* Containerized: Docker image stored in Artifact Registry.
+* API: FastAPI endpoint exposes inference functionality.
+* Web UI: Minimal HTML interface mirrors GUI overlay features for visualization.
+
+
+## 🌐 **Service sample:** [Access service](https://cannabis-cloud-service-1002335819840.northamerica-south1.run.app/)
