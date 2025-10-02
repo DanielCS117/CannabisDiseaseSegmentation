@@ -499,4 +499,8 @@ Summary:
 * Web UI: Minimal HTML interface mirrors GUI overlay features for visualization.
 
 
-## 🌐 **Service sample:** [Access service](https://cannabis-cloud-service-1002335819840.northamerica-south1.run.app/)
+## 🎥 **Demo**
+
+Here’s a short preview (11s) of the cloud service in action:
+
+![Cloud Run Demo](assets/demo_cannabis.gif)

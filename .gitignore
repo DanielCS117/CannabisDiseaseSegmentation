@@ -16,3 +16,4 @@ cloud/static/**/*.png
 !*.json
 !*.jpg
 !*.png
+!*.gif
